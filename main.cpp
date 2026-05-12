@@ -54,6 +54,12 @@ void Log(const std::string& message) {
 
 }
 
+void Log(const std::wstring& message) {
+
+	Log(ConvertString(message));
+
+}
+
 void Log(std::ostream& os, const std::string& message) {
 
 	os << message << std::endl;
@@ -152,6 +158,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ShowWindow(hwnd, SW_SHOW);
 
 	MSG msg{};
+
+	
+
 
 	//DXGIファクトリーの生成
 	IDXGIFactory7* dxgiFactory = nullptr;
