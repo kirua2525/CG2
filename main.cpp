@@ -19,7 +19,7 @@
 //時間を扱うライブラリ
 #include <chrono>
 
-std::wstring ConvertString(const std::string& str) {
+std::wstring ConvertString(const std::string & str) {
 	if (str.empty()) {
 		return std::wstring();
 	}
@@ -33,7 +33,7 @@ std::wstring ConvertString(const std::string& str) {
 	return result;
 }
 
-std::string ConvertString(const std::wstring& str) {
+std::string ConvertString(const std::wstring & str) {
 	if (str.empty()) {
 		return std::string();
 	}
@@ -47,19 +47,19 @@ std::string ConvertString(const std::wstring& str) {
 	return result;
 }
 
-void Log(const std::string& message) {
+void Log(const std::string & message) {
 
 	OutputDebugStringA(message.c_str());
 
 }
 
-void Log(const std::wstring& message) {
+void Log(const std::wstring & message) {
 
 	Log(ConvertString(message));
 
 }
 
-void Log(std::ostream& os, const std::string& message) {
+void Log(std::ostream & os, const std::string & message) {
 
 	os << message << std::endl;
 	OutputDebugStringA(message.c_str());
@@ -153,13 +153,24 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		wc.hInstance,             //インスタンスハンドル
 		nullptr);                 //オプション
 
+#ifdef _DEBUG
+
+	ID3D12Debug1* debugController = nullptr;
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
+
+		//デバッグレイヤーを有効化する
+		debugController->EnableDebugLayer();
+
+		//さらにGPU側でもチェックを行うようにする
+		debugController->SetEnableGPUBasedValidation(TRUE);
+	}
+
+#endif
+
 	//ウィンドウを表示する
 	ShowWindow(hwnd, SW_SHOW);
 
 	MSG msg{};
-
-	
-
 
 	//DXGIファクトリーの生成
 	IDXGIFactory7* dxgiFactory = nullptr;
@@ -227,6 +238,47 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(device != nullptr);
 	Log("Complete create D3D12Device!!!\n"); //初期化完了のログをだす
 
+#ifdef _DEBUG
+
+	ID3D12InfoQueue* infoQueue = nullptr;
+
+	if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&infoQueue)))) {
+
+		//ヤバイエラー時に止まる
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+
+		//エラー時に止まる
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+		
+		//警告時に止まる
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+
+		//解放
+		infoQueue->Release();
+
+		//抑制するメッセージのID
+		D3D12_MESSAGE_ID denyIds[] = {
+
+			//Windows11でのDXGIデバッグプレイヤーとDX12デバッグプレイヤーの相互作用バグによるエラーメッセージ
+			//https://stackverflow.com/questions/69805245/directx-12-application-is-crashing-in-windows-11
+			D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE
+
+		};
+
+		//抑制するレベル
+		D3D12_MESSAGE_SEVERITY severities[] = { D3D12_MESSAGE_SEVERITY_INFO };
+		D3D12_INFO_QUEUE_FILTER filter{};
+		filter.DenyList.NumIDs = _countof(denyIds);
+		filter.DenyList.pIDList = denyIds;
+		filter.DenyList.NumSeverities = _countof(severities);
+		filter.DenyList.pSeverityList = severities;
+
+		//指定したメッセージの表示を抑制する
+		infoQueue->PushStorageFilter(&filter);
+
+	}
+
+#endif
 
 	//コマンドキューを生成する
 	ID3D12CommandQueue* commandQueue = nullptr;
@@ -303,7 +355,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//2つ目を作る
 	device->CreateRenderTargetView(swapChainResources[1], &rtvDesc, rtvHandles[1]);
-	
+
 	//これから書き込むバックバッファのインデックスを取得
 	UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
 
