@@ -55,7 +55,7 @@ void Log(const std::string & message) {
 
 void Log(const std::wstring & message) {
 
-	OutputDebugStringA(ConvertString(message).c_str());
+	Log(ConvertString(message));
 
 }
 
@@ -110,6 +110,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//ファイルを作って書き込み準備
 	std::ofstream logStream(logFilePath);
+
+	//string->wstring
+	std::wstring ConvertString(const std::string & str);
+
+	//wstring->string
+	std::string ConvertString(const std::wstring & str);
 
 
 	WNDCLASS wc{};
