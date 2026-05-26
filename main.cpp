@@ -7,6 +7,9 @@
 #include <dxgi1_6.h>
 #include <cassert>
 
+#include <dxgidebug.h>
+#pragma comment(lib, "dxguid.lib")
+
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
@@ -19,7 +22,7 @@
 //時間を扱うライブラリ
 #include <chrono>
 
-std::wstring ConvertString(const std::string & str) {
+std::wstring ConvertString(const std::string& str) {
 	if (str.empty()) {
 		return std::wstring();
 	}
@@ -33,7 +36,7 @@ std::wstring ConvertString(const std::string & str) {
 	return result;
 }
 
-std::string ConvertString(const std::wstring & str) {
+std::string ConvertString(const std::wstring& str) {
 	if (str.empty()) {
 		return std::string();
 	}
@@ -47,19 +50,19 @@ std::string ConvertString(const std::wstring & str) {
 	return result;
 }
 
-void Log(const std::string & message) {
+void Log(const std::string& message) {
 
 	OutputDebugStringA(message.c_str());
 
 }
 
-void Log(const std::wstring & message) {
+void Log(const std::wstring& message) {
 
 	Log(ConvertString(message));
 
 }
 
-void Log(std::ostream & os, const std::string & message) {
+void Log(std::ostream& os, const std::string& message) {
 
 	os << message << std::endl;
 	OutputDebugStringA(message.c_str());
@@ -249,7 +252,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		//エラー時に止まる
 		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-		
+
 		//警告時に止まる
 		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
 
@@ -272,7 +275,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		//指定したメッセージの表示を抑制する
 		infoQueue->PushStorageFilter(&filter);
-		infoQueue-> Release();
+		infoQueue->Release();
 	}
 
 #endif
@@ -363,7 +366,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(SUCCEEDED(hr));
 
 	//FenceのSignalを持つためのイベントを作成する
-		HANDLE fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	HANDLE fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	assert(fenceEvent != nullptr);
 
 	//ウィンドウのxボタンが押されるまでループ
@@ -454,8 +457,40 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		fence->Release();
 	}
 
+	rtvDescriptorHeap->Release();
+
+	swapChainResources[0]->Release();
+	swapChainResources[1]->Release();
+	swapChain->Release();
+
+	commandList->Release();
+	commandAllocator->Release();
+	commandQueue->Release();
+
+	device->Release();
+	useAdapter->Release();
+	dxgiFactory->Release();
+
+#ifdef _DEBUG
+
+	debugController->Release();
+
+#endif
+
+	CloseWindow(hwnd);
+
 	//出力ウィンドウへの文字出力
 	Log("Hello,DirectX!\n");
+
+	//リソースリークチェック
+	IDXGIDebug* debug;
+	if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debug)))) {
+
+		debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+		debug->ReportLiveObjects(DXGI_DEBUG_APP, DXGI_DEBUG_RLO_ALL);
+		debug->Release();
+
+	}
 
 	return 0;
 }
