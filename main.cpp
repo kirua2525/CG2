@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <format>
+#include <math.h>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -30,6 +31,135 @@ struct Vector4 {
 	float x, y, z, w;
 
 };
+
+struct Vector3 {
+
+	float x, y, z;
+
+};
+
+
+struct Matrix4x4 {
+
+	float m[4][4];
+
+};
+
+struct Transform {
+
+	Vector3 scale;
+	Vector3 rotate;
+	Vector3 translate;
+
+};
+
+//4x4単位行列を作成する関数
+Matrix4x4 MakeIdentity4x4() {
+	return Matrix4x4{ {
+
+		{1.0f, 0.0f, 0.0f, 0.0f},
+		{0.0f, 1.0f, 0.0f, 0.0f},
+		{0.0f, 0.0f, 1.0f, 0.0f},
+		{0.0f, 0.0f, 0.0f, 1.0f}
+
+		}
+	};
+}
+
+//行列の積を計算する関数
+Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
+	Matrix4x4 result{};
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			result.m[i][j] = m1.m[i][0] * m2.m[0][j] +
+							 m1.m[i][1] * m2.m[1][j] +
+							 m1.m[i][2] * m2.m[2][j] +
+							 m1.m[i][3] * m2.m[3][j];
+		}
+	}
+	return result;
+}
+
+//スケール・回転・平行移動からアフィン変換行列を作る関数
+Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate) {
+	//回転行列の計算　(XYZの順)
+	float sx = std::sin(rotate.x), cx = std::cos(rotate.x);
+	float sy = std::sin(rotate.y), cy = std::cos(rotate.y);
+	float sz = std::sin(rotate.z), cz = std::cos(rotate.z);
+
+	Matrix4x4 rotateX = { {
+		{1.0f, 0.0f, 0.0f, 0.0f},
+		{0.0f, cx, sx, 0.0f},
+		{0.0f, -sx, cx, 0.0f},
+		{0.0f, 0.0f, 0.0f, 1.0f}
+	} };
+
+	Matrix4x4 rotateY = { {
+		{cy, 0.0f, -sy, 0.0f},
+		{0.0f, 1.0f, 0.0f, 0.0f},
+		{sy, 0.0f, cy, 0.0f},
+		{0.0f, 0.0f, 0.0f, 1.0f}
+	} };
+
+	Matrix4x4 rotateZ = { {
+		{cz, sz, 0.0f, 0.0f},
+		{-sz, cz, 0.0f, 0.0f},
+		{0.0f, 0.0f, 1.0f, 0.0f},
+		{0.0f, 0.0f, 0.0f, 1.0f}
+	} };
+
+	Matrix4x4 rotateMatrix = Multiply(rotateX, Multiply(rotateY, rotateZ));
+
+	//スケールと平行移動を合成
+	Matrix4x4 result = rotateMatrix;
+
+	//スケール適用
+	for (int i = 0; i < 3; ++i) {
+		result.m[0][i] *= scale.x;
+		result.m[1][i] *= scale.y;
+		result.m[2][i] *= scale.z;
+	}
+
+	//平行移動適用
+	result.m[3][0] = translate.x;
+	result.m[3][1] = translate.y;
+	result.m[3][2] = translate.z;
+	result.m[3][3] = 1.0f;
+
+	return result;
+}
+
+// 逆行列を計算する関数 (カメラのView行列変換用)
+Matrix4x4 Inverse(const Matrix4x4& m) {
+	// 回転部分 (左上3x3) の転置
+	Matrix4x4 result = MakeIdentity4x4();
+	for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+			result.m[i][j] = m.m[j][i];
+		}
+	}
+	// 平行移動部分の反転
+	Vector3 translation = { m.m[3][0], m.m[3][1], m.m[3][2] };
+	result.m[3][0] = -(translation.x * result.m[0][0] + translation.y * result.m[1][0] + translation.z * result.m[2][0]);
+	result.m[3][1] = -(translation.x * result.m[0][1] + translation.y * result.m[1][1] + translation.z * result.m[2][1]);
+	result.m[3][2] = -(translation.x * result.m[0][2] + translation.y * result.m[1][2] + translation.z * result.m[2][2]);
+
+	return result;
+}
+
+// 透視投影行列 (プロジェクション行列) を作成する関数
+Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspect, float nearClip, float farClip) {
+	Matrix4x4 result{};
+	float cot = 1.0f / std::tan(fovY / 2.0f);
+
+	result.m[0][0] = cot / aspect;
+	result.m[1][1] = cot;
+	result.m[2][2] = farClip / (farClip - nearClip);
+	result.m[2][3] = 1.0f;
+	result.m[3][2] = (-nearClip * farClip) / (farClip - nearClip);
+
+	return result;
+}
 
 std::wstring ConvertString(const std::string& str) {
 	if (str.empty()) {
@@ -515,12 +645,30 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
 	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-	D3D12_ROOT_PARAMETER rootParameters[1] = {};
+	D3D12_ROOT_PARAMETER rootParameters[2] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; //CBVを使う
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; //VertexShaderで使う
+	rootParameters[1].Descriptor.ShaderRegister = 0; //レジスタ番号0を使う
 	descriptionRootSignature.pParameters = rootParameters;
 	descriptionRootSignature.NumParameters = _countof(rootParameters);
+
+	//WVP用のリソースを作る。Matirix4x4 1つ分のサイズを用意する
+	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(Matrix4x4));
+
+	//データを書き込む
+	Matrix4x4* wvpData = nullptr;
+
+	//書き込むためのアドレスを取得
+	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
+
+	//単位行列を書き込んでおく
+	*wvpData = MakeIdentity4x4();
+
+	//wvp用のCBufferの場所を設定
+	//commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
 
 	//シリアライズしてバイナリにする
 	ID3DBlob* signatureBlob = nullptr;
@@ -655,6 +803,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	scissorRect.top = 0;
 	scissorRect.bottom = kClientHeight;
 
+	//Transform変数を作る
+	Transform transform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
+	Transform cameraTransform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f} };
+
 	//ウィンドウのxボタンが押されるまでループ
 	while (msg.message != WM_QUIT) {
 
@@ -665,6 +817,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			DispatchMessage(&msg);
 
 		} else {
+
+			transform.rotate.y += 0.03f;
+
+			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
+			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
+			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
+			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+			*wvpData = worldViewProjectionMatrix;
 
 			hr = commandAllocator->Reset();
 			assert(SUCCEEDED(hr));
@@ -710,6 +871,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//マテリアルCBufferの場所をコマンドリストに設定
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 			
+			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
+
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferView); //VBVを設定
 			//形状を設定。P50に設定しているものとはまた別。同じものを設定すると考えておけば良い
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -762,32 +925,39 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	swapChainResources[0]->Release();
 	swapChainResources[1]->Release();
-	swapChain->Release();
-
-	commandList->Release();
-	commandAllocator->Release();
-	commandQueue->Release();
-
-	device->Release();
-	useAdapter->Release();
-	dxgiFactory->Release();
-
 	vertexResource->Release();
+	materialResource->Release();
+	wvpResource->Release();
+	
 	graphicsPipelineState->Release();
-	signatureBlob->Release();
+	rootSignature->Release();
+	if (signatureBlob) {
+	
+		signatureBlob->Release();
+
+	}
+	
 	if (errorBlob) {
 
 		errorBlob->Release();
 
 	}
-	rootSignature->Release();
+	
 	pixelShaderBlob->Release();
 	vertexShaderBlob->Release();
 	includeHandler->Release();
 	dxcCompiler->Release();
 	dxcUtils->Release();
-	materialResource->Release();
+	
+	swapChain->Release();
 
+	device->Release();
+	useAdapter->Release();
+	dxgiFactory->Release();
+
+	commandList->Release();
+	commandAllocator->Release();
+	commandQueue->Release();
 
 #ifdef _DEBUG
 
