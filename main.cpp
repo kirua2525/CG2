@@ -456,6 +456,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//ウィンドウを表示する
 	ShowWindow(hwnd, SW_SHOW);
 
+	float triangleColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+
 	MSG msg{};
 
 	//DXGIファクトリーの生成
@@ -886,7 +888,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		} else {
 
-			transform.rotate.y += 0.03f;
+			//transform.rotate.y += 0.03f;
 
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
 			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
@@ -907,6 +909,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			//開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
 			ImGui::ShowDemoWindow();
+
+			ImGui::Begin("Material Window");
+			if (ImGui::ColorEdit4("Triangle Color", triangleColor)) {
+
+				materialData[0] = { triangleColor[0], triangleColor[1], triangleColor[2], triangleColor[3] };
+
+			}
+			ImGui::End();
+
+
 
 			//ImGuiの内部コマンドを生成する
 			ImGui::Render();
@@ -969,11 +981,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//実際のcommandListのImGuiの描画コマンドを積む
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 
-
+			
 #endif
-
-
-
 
 			//遷移前(現在)のResourceState
 			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
