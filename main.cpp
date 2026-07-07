@@ -527,9 +527,30 @@ ID3D12DescriptorHeap* CreateDescriptorHeap(ID3D12Device* device, D3D12_DESCRIPTO
 
 };
 
+D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(ID3D12DescriptorHeap* descriptorHeap, uint32_t descriptorSize, uint32_t index)
+{
+
+	D3D12_CPU_DESCRIPTOR_HANDLE handleCPU = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	handleCPU.ptr += (descriptorSize * index);
+	return handleCPU;
+
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(ID3D12DescriptorHeap* descriptorHeap, uint32_t descriptorSize, uint32_t index)
+{
+
+	D3D12_GPU_DESCRIPTOR_HANDLE handleGPU = descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	handleGPU.ptr += (descriptorSize * index);
+	return handleGPU;
+
+}
+
+
 //Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	HRESULT hrCo = CoInitializeEx(0, COINIT_MULTITHREADED);
+
+	static bool useMonsterBall = true;
 
 	assert(SUCCEEDED(hrCo));
 
@@ -1261,6 +1282,32 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	};
 
+		//DescriptorSizeを取得しておく
+		const uint32_t desriptorSizeSRV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		const uint32_t desriptorSizeRTV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		const uint32_t desriptorSizeDSV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+		//2枚目のTextureを読んで転送する
+		DirectX::ScratchImage mipImages2 = LoadTexture("resources/monsterBall.png");
+		const DirectX::TexMetadata& metadata2 = mipImages2.GetMetadata();
+		ID3D12Resource* textureResource2 = CreateTextureResource(device, metadata2);
+		UploadTextureData(textureResource2, mipImages2);
+
+		//metaDataを基にSRVの設定
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{};
+		srvDesc2.Format = metadata2.format;
+		srvDesc2.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc2.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc2.Texture2D.MipLevels = UINT(metadata2.mipLevels);
+
+		//SRVを作成するDescriptorHeapの場所を決める
+		D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 2);
+		D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 2);
+
+		//SRVの生成
+		device->CreateShaderResourceView(textureResource2, &srvDesc2, textureSrvHandleCPU2);
+
+
 	//ウィンドウのxボタンが押されるまでループ
 	while (msg.message != WM_QUIT) {
 
@@ -1294,6 +1341,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			//開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
 			ImGui::ShowDemoWindow();
+
+			ImGui::Begin("Texture Window");
+			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			ImGui::End();
 
 			//ImGuiの内部コマンドを生成する
 			ImGui::Render();
@@ -1373,9 +1424,21 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//C.球体の描画
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSphere->GetGPUVirtualAddress()); // 1番: WVP(球体用)
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);                         // 2番: テクスチャ
+			
+			if (useMonsterBall) {
+				commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2); // monsterBall
+			} else {
+				commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);  // uvChecker
+			}
+	
+
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphere);
 			commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0); 
+
+			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
+
+
 
 #ifdef USE_IMGUI
 
@@ -1383,6 +1446,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//実際のcommandListのImGuiの描画コマンドを積む
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 
+			
 
 #endif
 
@@ -1508,9 +1572,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 #endif
 
-	device->Release();
-	useAdapter->Release();
-	dxgiFactory->Release();
+	if (device) device->Release();
+	if (useAdapter) useAdapter->Release();
+	if (dxgiFactory) dxgiFactory->Release();
 
 	CloseWindow(hwnd);
 
