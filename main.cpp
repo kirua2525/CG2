@@ -1472,6 +1472,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());       // 1番: WVP(板ポリ用)
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);                         // 2番: テクスチャ
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 			commandList->DrawInstanced(6, 1, 0, 0);
 
@@ -1480,6 +1481,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress()); // 1番: WVP(スプライト用)
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);                         // 2番: テクスチャ
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 			commandList->DrawInstanced(6, 1, 0, 0);
 
@@ -1494,6 +1496,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			}
 
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+		
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphere);
 			commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0);
 
