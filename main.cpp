@@ -672,6 +672,7 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 
 			Vector4 position;
 			s >> position.x >> position.y >> position.z;
+			position.x *= -1.0f;
 			position.w = 1.0f;
 			positions.push_back(position);
 
@@ -687,6 +688,7 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 
 			Vector3 normal;
 			s >> normal.x >> normal.y >> normal.z;
+			normal.x *= -1.0f;
 			normals.push_back(normal);
 
 		} else if (identifier == "f") {
@@ -1761,7 +1763,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 
 			commandList->IASetIndexBuffer(&indexBufferViewSprite);
-			commandList->DrawInstanced(6, 1, 0, 0);
+			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 			//C.球体の描画
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
@@ -1776,9 +1778,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphere);
-			//commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0);
+			commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0);
 
-			commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
+			//commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 
 			//commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
