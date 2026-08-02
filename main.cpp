@@ -49,6 +49,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 #define DIRECTINPUT_VERSION 0x0800 //DirectInputのバージョン指定
 #include <dinput.h>
 
+//#include"DebugCamera.h"
+
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
@@ -947,10 +949,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	HRESULT hr;
 
 	//音声読み込み
-	SoundData soundData1 = SoundLoadWave("Resources/Alarm07.wav");
+	//SoundData soundData1 = SoundLoadWave("Resources/Alarm07.wav");
 
 	Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
-	IXAudio2MasteringVoice* masterVoice;
+	//IXAudio2MasteringVoice* masterVoice;
 
 	D3DResourceLeakChecker leakCheck;
 
@@ -961,13 +963,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(SUCCEEDED(hrCo));
 
 	//XAudioエンジンのインスタンスｗｐ生成
-	hr = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
+	//hr = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
 
 	//マスターボイスを生成
-	hr = xAudio2->CreateMasteringVoice(&masterVoice);
+	//hr = xAudio2->CreateMasteringVoice(&masterVoice);
 
 	//音声再生
-	SoundPlayWave(xAudio2.Get(), soundData1);
+	//SoundPlayWave(xAudio2.Get(), soundData1);
 
 	//ログのディレクトリを用意
 	std::filesystem::create_directory("logs");
@@ -1885,22 +1887,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			}
 
 #ifdef USE_IMGUI
-			ImGui_ImplDX12_NewFrame();
-			ImGui_ImplWin32_NewFrame();
-			ImGui::NewFrame();
+			//ImGui_ImplDX12_NewFrame();
+			//ImGui_ImplWin32_NewFrame();
+			//ImGui::NewFrame();
 
-			//開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
-			ImGui::ShowDemoWindow();
+			////開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
+			//ImGui::ShowDemoWindow();
 
-			ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
-			ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
-			ImGui::Begin("Texture Window");
-			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
-			ImGui::End();
+			//ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
+			//ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+			//ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
+			//ImGui::Begin("Texture Window");
+			//ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			//ImGui::End();
 
-			//ImGuiの内部コマンドを生成する
-			ImGui::Render();
+			////ImGuiの内部コマンドを生成する
+			//ImGui::Render();
 
 #endif
 
@@ -1960,40 +1962,40 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//形状を設定。P50に設定しているものとはまた別。同じものを設定すると考えておけば良い
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			//A.3D板ポリゴンの描画
-			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
-			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());       // 1番: WVP(板ポリ用)
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);                         // 2番: テクスチャ
-			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			////A.3D板ポリゴンの描画
+			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
+			//commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());       // 1番: WVP(板ポリ用)
+			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);                         // 2番: テクスチャ
+			//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-			commandList->DrawInstanced(6, 1, 0, 0);
+			//commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+			//commandList->DrawInstanced(6, 1, 0, 0);
 
 			//B.Spriteの描画
-			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress()); // 0番: マテリアル
-			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress()); // 1番: WVP(スプライト用)
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);                         // 2番: テクスチャ
-			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress()); // 0番: マテリアル
+			//commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress()); // 1番: WVP(スプライト用)
+			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);                         // 2番: テクスチャ
+			//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
+			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 
-			commandList->IASetIndexBuffer(&indexBufferViewSprite);
-			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+			//commandList->IASetIndexBuffer(&indexBufferViewSprite);
+			//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 			//C.球体の描画
-			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
-			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSphere->GetGPUVirtualAddress()); // 1番: WVP(球体用)
+			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
+			//commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSphere->GetGPUVirtualAddress()); // 1番: WVP(球体用)
 
-			if (useMonsterBall) {
-				commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2); // monsterBall
-			} else {
-				commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);  // uvChecker
-			}
+			//if (useMonsterBall) {
+			//	commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2); // monsterBall
+			//} else {
+			//	commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);  // uvChecker
+			//}
 
-			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphere);
-			commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0);
+			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphere);
+			//commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0);
 
 			//commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 
@@ -2010,7 +2012,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 
 			//実際のcommandListのImGuiの描画コマンドを積む
-			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
+			//ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 
 
 
@@ -2051,23 +2053,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			}
 
-			if (fenceEvent) {
-
-				CloseHandle(fenceEvent);
-				fenceEvent = nullptr;
-
-			}
-
 		}
 
 	}
 
-	
+	if (fenceEvent) {
+
+		CloseHandle(fenceEvent);
+		fenceEvent = nullptr;
+
+	}
+
 	//音声データ解放
-	SoundUnload(&soundData1);
+	//SoundUnload(&soundData1);
 
 	//xAudio2解放
-	xAudio2.Reset();
+	//xAudio2.Reset();
 
 
 #ifdef USE_IMGUI
