@@ -3,6 +3,9 @@
 #include <string>
 #include <format>
 #include <math.h>
+#include "Math.h"
+
+#include "DebugCamera.h"
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -49,34 +52,9 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 #define DIRECTINPUT_VERSION 0x0800 //DirectInputのバージョン指定
 #include <dinput.h>
 
-//#include"DebugCamera.h"
-
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
-struct Vector4 {
-
-	float x, y, z, w;
-
-};
-
-struct Vector3 {
-
-	float x, y, z;
-
-};
-
-struct Vector2 {
-
-	float x, y;
-
-};
-
-struct Matrix4x4 {
-
-	float m[4][4];
-
-};
 
 //struct Matrix3x3 {
 //
@@ -190,32 +168,32 @@ struct SoundData
 
 };
 
-//4x4単位行列を作成する関数
-Matrix4x4 MakeIdentity4x4() {
-	return Matrix4x4{ {
-
-		{1.0f, 0.0f, 0.0f, 0.0f},
-		{0.0f, 1.0f, 0.0f, 0.0f},
-		{0.0f, 0.0f, 1.0f, 0.0f},
-		{0.0f, 0.0f, 0.0f, 1.0f}
-
-		}
-	};
-}
+////4x4単位行列を作成する関数
+//Matrix4x4 MakeIdentity4x4() {
+//	return Matrix4x4{ {
+//
+//		{1.0f, 0.0f, 0.0f, 0.0f},
+//		{0.0f, 1.0f, 0.0f, 0.0f},
+//		{0.0f, 0.0f, 1.0f, 0.0f},
+//		{0.0f, 0.0f, 0.0f, 1.0f}
+//
+//		}
+//	};
+//}
 
 //行列の積を計算する関数
-Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
-	Matrix4x4 result{};
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			result.m[i][j] = m1.m[i][0] * m2.m[0][j] +
-				m1.m[i][1] * m2.m[1][j] +
-				m1.m[i][2] * m2.m[2][j] +
-				m1.m[i][3] * m2.m[3][j];
-		}
-	}
-	return result;
-}
+//Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
+//	Matrix4x4 result{};
+//	for (int i = 0; i < 4; ++i) {
+//		for (int j = 0; j < 4; ++j) {
+//			result.m[i][j] = m1.m[i][0] * m2.m[0][j] +
+//				m1.m[i][1] * m2.m[1][j] +
+//				m1.m[i][2] * m2.m[2][j] +
+//				m1.m[i][3] * m2.m[3][j];
+//		}
+//	}
+//	return result;
+//}
 
 //スケール・回転・平行移動からアフィン変換行列を作る関数
 Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate) {
@@ -266,37 +244,37 @@ Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Ve
 	return result;
 }
 
-// 逆行列を計算する関数 (カメラのView行列変換用)
-Matrix4x4 Inverse(const Matrix4x4& m) {
-	// 回転部分 (左上3x3) の転置
-	Matrix4x4 result = MakeIdentity4x4();
-	for (int i = 0; i < 3; ++i) {
-		for (int j = 0; j < 3; ++j) {
-			result.m[i][j] = m.m[j][i];
-		}
-	}
-	// 平行移動部分の反転
-	Vector3 translation = { m.m[3][0], m.m[3][1], m.m[3][2] };
-	result.m[3][0] = -(translation.x * result.m[0][0] + translation.y * result.m[1][0] + translation.z * result.m[2][0]);
-	result.m[3][1] = -(translation.x * result.m[0][1] + translation.y * result.m[1][1] + translation.z * result.m[2][1]);
-	result.m[3][2] = -(translation.x * result.m[0][2] + translation.y * result.m[1][2] + translation.z * result.m[2][2]);
-
-	return result;
-}
+//// 逆行列を計算する関数 (カメラのView行列変換用)
+//Matrix4x4 Inverse(const Matrix4x4& m) {
+//	// 回転部分 (左上3x3) の転置
+//	Matrix4x4 result = MakeIdentity4x4();
+//	for (int i = 0; i < 3; ++i) {
+//		for (int j = 0; j < 3; ++j) {
+//			result.m[i][j] = m.m[j][i];
+//		}
+//	}
+//	// 平行移動部分の反転
+//	Vector3 translation = { m.m[3][0], m.m[3][1], m.m[3][2] };
+//	result.m[3][0] = -(translation.x * result.m[0][0] + translation.y * result.m[1][0] + translation.z * result.m[2][0]);
+//	result.m[3][1] = -(translation.x * result.m[0][1] + translation.y * result.m[1][1] + translation.z * result.m[2][1]);
+//	result.m[3][2] = -(translation.x * result.m[0][2] + translation.y * result.m[1][2] + translation.z * result.m[2][2]);
+//
+//	return result;
+//}
 
 // 透視投影行列 (プロジェクション行列) を作成する関数
-Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspect, float nearClip, float farClip) {
-	Matrix4x4 result{};
-	float cot = 1.0f / std::tan(fovY / 2.0f);
-
-	result.m[0][0] = cot / aspect;
-	result.m[1][1] = cot;
-	result.m[2][2] = farClip / (farClip - nearClip);
-	result.m[2][3] = 1.0f;
-	result.m[3][2] = (-nearClip * farClip) / (farClip - nearClip);
-
-	return result;
-}
+//Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspect, float nearClip, float farClip) {
+//	Matrix4x4 result{};
+//	float cot = 1.0f / std::tan(fovY / 2.0f);
+//
+//	result.m[0][0] = cot / aspect;
+//	result.m[1][1] = cot;
+//	result.m[2][2] = farClip / (farClip - nearClip);
+//	result.m[2][3] = 1.0f;
+//	result.m[3][2] = (-nearClip * farClip) / (farClip - nearClip);
+//
+//	return result;
+//}
 
 Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip);
 
@@ -335,15 +313,15 @@ Matrix4x4 MakeRotateZMatrix(float rotateZ) {
 	return result;
 }
 
-Matrix4x4 MakeTranslateMatrix(const Vector3& translate) {
-
-	Matrix4x4 result = MakeIdentity4x4();
-	result.m[3][0] = translate.x;
-	result.m[3][1] = translate.y;
-	result.m[3][2] = translate.z;
-	return result;
-
-}
+//Matrix4x4 MakeTranslateMatrix(const Vector3& translate) {
+//
+//	Matrix4x4 result = MakeIdentity4x4();
+//	result.m[3][0] = translate.x;
+//	result.m[3][1] = translate.y;
+//	result.m[3][2] = translate.z;
+//	return result;
+//
+//}
 
 std::wstring ConvertString(const std::string& str) {
 	if (str.empty()) {
@@ -1571,6 +1549,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		{0.0f, 0.0f, 0.0f},
 	};
 
+	//デバッグカメラのインスタンス化
+	DebugCamera camera;
+	camera.Initialize();
+
 	//metaDataを基にSRVの設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = metadata.format;
@@ -1847,10 +1829,30 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			transform.rotate.y += 0.0f;
 
+			// 1. デバッグカメラの更新
+			camera.Update();
+
+			// 2. カメラからビュー行列と射影行列を取得
+			Matrix4x4 viewMatrix = camera.GetViewMatrix();
+			Matrix4x4 projectionMatrix = camera.GetProjectionMatrix();
+
+			// 3. 3Dモデル（OBJ）のワールド行列計算とWVP更新
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
+			wvpData->WVP = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+			wvpData->World = worldMatrix;
+
+			// 4. 球体のワールド行列計算とWVP更新
+			//sphereTransform.rotate.y += 0.01f;
+			//Matrix4x4 sphereWorldMatrix = MakeAffineMatrix(sphereTransform.scale, sphereTransform.rotate, sphereTransform.translate);
+			//wvpDataSphere->WVP = Multiply(sphereWorldMatrix, Multiply(viewMatrix, projectionMatrix));
+			//wvpDataSphere->World = sphereWorldMatrix;
+
+
+
+			//Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
 			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
-			Matrix4x4 viewMatrix = Inverse(cameraMatrix);
-			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
+			//Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+			//Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 
 			wvpData->WVP = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 			wvpData->World = worldMatrix;
@@ -1963,13 +1965,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 			////A.3D板ポリゴンの描画
-			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
-			//commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());       // 1番: WVP(板ポリ用)
-			//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);                         // 2番: テクスチャ
-			//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
+			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());       // 1番: WVP(板ポリ用)
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);                         // 2番: テクスチャ
+			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
-			//commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-			//commandList->DrawInstanced(6, 1, 0, 0);
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+			commandList->DrawInstanced(6, 1, 0, 0);
 
 			//B.Spriteの描画
 			//commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress()); // 0番: マテリアル
@@ -1983,19 +1985,19 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 			//C.球体の描画
-			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
-			//commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSphere->GetGPUVirtualAddress()); // 1番: WVP(球体用)
+			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
+			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSphere->GetGPUVirtualAddress()); // 1番: WVP(球体用)
 
-			//if (useMonsterBall) {
-			//	commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2); // monsterBall
+			///if (useMonsterBall) {
+				//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2); // monsterBall
 			//} else {
-			//	commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);  // uvChecker
+				//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);  // uvChecker
 			//}
 
-			//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
-			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphere);
-			//commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0);
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphere);
+			commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0);
 
 			//commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 
