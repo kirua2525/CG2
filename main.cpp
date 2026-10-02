@@ -102,6 +102,8 @@ struct DirectionalLight {
 
 };
 
+DirectionalLight directionalLight;
+
 struct MaterialData {
 
 	std::string textureFilePath;
@@ -167,6 +169,34 @@ struct SoundData
 	unsigned int bufferSize;
 
 };
+
+enum BlendMode {
+
+	//ブレンド無し
+	kBlendModeNone,
+
+	//通常αブレンド。 デフォルト。 Src * SrcA + Dest * (1 - SrcA)
+	kBlendModeNormal,
+
+	//加算。 Src * SrcA + Dest * 1
+	kBlendModeAdd,
+
+	//減算。Dest * 1 - Src * SrcA
+	kBlendModeSubtract,
+
+	//乗算。Src * 0 + Dest * Src
+	kBlendModeMultily,
+
+	//スクリーン。 Src * (1 - Dest) + Dest * 1
+	kBlendModeScreen,
+
+	//判明してはいけない
+	kCountOfBlendMode,
+
+};
+
+
+
 
 ////4x4単位行列を作成する関数
 //Matrix4x4 MakeIdentity4x4() {
@@ -1387,6 +1417,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_BLEND_DESC blendDesc{};
 	//すべての色要素を書きこむ
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	blendDesc.RenderTarget[0].BlendEnable = TRUE;
+	blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
 
 	//RasterizerStateの設定
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
@@ -1540,7 +1577,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	scissorRect.bottom = kClientHeight;
 
 	//Transform変数を作る
-	Transform transform{ {2.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
+	Transform transform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
 	Transform cameraTransform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f} };
 
 	Transform uvTransformSprite{
@@ -1858,7 +1895,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			wvpData->World = worldMatrix;
 
 			// 球体の更新
-			sphereTransform.rotate.y += 0.01f;
+			//sphereTransform.rotate.y += 0.01f;
 			Matrix4x4 sphereWorldMatrix = MakeAffineMatrix(sphereTransform.scale, sphereTransform.rotate, sphereTransform.translate);
 			Matrix4x4 sphereWvpMatrix = Multiply(sphereWorldMatrix, Multiply(viewMatrix, projectionMatrix));
 			wvpDataSphere->WVP = sphereWvpMatrix;
@@ -1889,22 +1926,35 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			}
 
 #ifdef USE_IMGUI
-			//ImGui_ImplDX12_NewFrame();
-			//ImGui_ImplWin32_NewFrame();
-			//ImGui::NewFrame();
+			ImGui_ImplDX12_NewFrame();
+			ImGui_ImplWin32_NewFrame();
+			ImGui::NewFrame();
 
 			////開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
-			//ImGui::ShowDemoWindow();
-
-			//ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
-			//ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
-			//ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
-			//ImGui::Begin("Texture Window");
-			//ImGui::Checkbox("useMonsterBall", &useMonsterBall);
-			//ImGui::End();
+			ImGui::ShowDemoWindow();
+			ImGui::Begin("Settings");
+			ImGui::DragFloat3("CameraTranslate", &cameraTransform.translate.x, 0.01f);
+			ImGui::SliderAngle("CameraRotateX", &cameraTransform.rotate.x);
+			ImGui::SliderAngle("CameraRotateY", &cameraTransform.rotate.y);
+			ImGui::SliderAngle("CameraRotateZ", &cameraTransform.rotate.z);
+			ImGui::SliderAngle("SphereRotateX", &sphereTransform.rotate.x);
+			ImGui::SliderAngle("SphereRotateY", &sphereTransform.rotate.y);
+			ImGui::SliderAngle("SphereRotateZ", &sphereTransform.rotate.z);
+			ImGui::DragFloat4("color", &materialData->color.x, 0.01f, 0.0f, 1.0f);
+			ImGui::Checkbox("enableLighting", reinterpret_cast<bool*>(&materialData->enableLighting));
+			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			ImGui::SliderFloat3("LightColor", &directionalLight.color.x, 0.0f, 1.0f);
+			ImGui::DragFloat3("LightDirection", &directionalLight.direction.x, 0.01f, -1.0f, 1.0f);
+			ImGui::SliderAngle("Intensity", &directionalLight.intensity, 0.0f, 10.0f);
+			ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+			ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
+			
+			
+			ImGui::End();
 
 			////ImGuiの内部コマンドを生成する
-			//ImGui::Render();
+			ImGui::Render();
 
 #endif
 
@@ -1985,8 +2035,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 			//C.球体の描画
-			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
-			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSphere->GetGPUVirtualAddress()); // 1番: WVP(球体用)
+			//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress()); // 0番: マテリアル
+			//commandList->SetGraphicsRootConstantBufferView(1, wvpResourceSphere->GetGPUVirtualAddress()); // 1番: WVP(球体用)
 
 			///if (useMonsterBall) {
 				//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2); // monsterBall
@@ -1994,10 +2044,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);  // uvChecker
 			//}
 
-			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+			//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphere);
-			commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0);
+			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSphere);
+			//commandList->DrawInstanced(kSphereVertexCount, 1, 0, 0);
 
 			//commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 
@@ -2014,7 +2064,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 
 			//実際のcommandListのImGuiの描画コマンドを積む
-			//ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
+			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 
 
 
