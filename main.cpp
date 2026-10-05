@@ -2080,7 +2080,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			//コマンドリストの内容を確定させる。すべてのコマンドを積んでからCloseすること
 			hr = commandList->Close();
-			assert(SUCCEEDED(hr));
+			//assert(SUCCEEDED(hr));
+			if (FAILED(hr)) {
+
+				assert(false);
+
+			}
 
 			//GPUにコマンドリストの実行を行わせる
 			Microsoft::WRL::ComPtr<ID3D12CommandList> commandLists[] = {commandList};

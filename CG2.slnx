@@ -1,11 +1,18 @@
 <Solution>
   <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Development" />
+    <BuildType Name="Release" />
     <Platform Name="x64" />
   </Configurations>
   <Folder Name="/ソリューション項目/">
     <File Path=".editorconfig" />
     <File Path="exclusion.dic" />
   </Folder>
-  <Project Path="CG2.vcxproj" Id="2679bc4d-4a4a-4dc2-a963-fdb51dc12686" />
-  <Project Path="externals/DirectXTex/DirectXTex_Desktop_2022_Win10.vcxproj" Id="371b9fa9-4c90-4ac6-a123-aced756d6c77" />
+  <Project Path="CG2.vcxproj" Id="2679bc4d-4a4a-4dc2-a963-fdb51dc12686">
+    <BuildType Solution="Release|*" Project="Development" />
+  </Project>
+  <Project Path="externals/DirectXTex/DirectXTex_Desktop_2022_Win10.vcxproj" Id="371b9fa9-4c90-4ac6-a123-aced756d6c77">
+    <BuildType Solution="Release|*" Project="Development" />
+  </Project>
 </Solution>
