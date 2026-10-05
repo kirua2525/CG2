@@ -88,6 +88,6 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Object3d.hlsli" />
+    <None Include="resources\Shader\Object3d.hlsli" />
   </ItemGroup>
 </Project>
