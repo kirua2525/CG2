@@ -1501,29 +1501,29 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	std::memcpy(vertexData, modelData.vertices.data(), sizeof(VertexData)* modelData.vertices.size());
 
-	//左下
-	vertexData[0].position = { 0.0f, 360.0f, 0.0f, 1.0f };
-	vertexData[0].texcoord = { 0.0f, 1.0f };
+	////左下
+	//vertexData[0].position = { 0.0f, 360.0f, 0.0f, 1.0f };
+	//vertexData[0].texcoord = { 0.0f, 1.0f };
 
-	//上
-	vertexData[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };
-	vertexData[1].texcoord = { 0.0f, 0.0f };
+	////上
+	//vertexData[1].position = { 0.0f, 0.0f, 0.0f, 1.0f };
+	//vertexData[1].texcoord = { 0.0f, 0.0f };
 
-	//右下
-	vertexData[2].position = { 640.0f, 360.0f, 0.0f, 1.0f };
-	vertexData[2].texcoord = { 1.0f, 1.0f };
+	////右下
+	//vertexData[2].position = { 640.0f, 360.0f, 0.0f, 1.0f };
+	//vertexData[2].texcoord = { 1.0f, 1.0f };
 
-	//左下2
-	vertexData[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };
-	vertexData[3].texcoord = { 0.0f, 0.0f };
+	////左下2
+	//vertexData[3].position = { 0.0f, 0.0f, 0.0f, 1.0f };
+	//vertexData[3].texcoord = { 0.0f, 0.0f };
 
-	//上2
-	vertexData[4].position = { 640.0f, 0.0f, 0.0f,1.0f };
-	vertexData[4].texcoord = { 1.0f, 0.0f };
+	////上2
+	//vertexData[4].position = { 640.0f, 0.0f, 0.0f,1.0f };
+	//vertexData[4].texcoord = { 1.0f, 0.0f };
 
-	//右下2
-	vertexData[5].position = { 640.0f, 360.0f, 0.0f, 1.0f };
-	vertexData[5].texcoord = { 1.0f, 1.0f };
+	////右下2
+	//vertexData[5].position = { 640.0f, 360.0f, 0.0f, 1.0f };
+	//vertexData[5].texcoord = { 1.0f, 1.0f };
 
 	//vertexData[index].normal.x = vertexData[index].position.x;
 	//vertexData[index].normal.y = vertexData[index].position.y;
@@ -1577,7 +1577,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	scissorRect.bottom = kClientHeight;
 
 	//Transform変数を作る
-	Transform transform{ {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
+	Transform transform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
 	Transform cameraTransform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f} };
 
 	Transform uvTransformSprite{
