@@ -1435,10 +1435,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 
 	//Shaderをコンパイルする
-	Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = CompileShader(L"ObJect3d.VS.hlsl", L"vs_6_0", dxcUtils, dxcCompiler, includeHandler);
+	Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = CompileShader(L"resources/Shader/ObJect3d.VS.hlsl", L"vs_6_0", dxcUtils, dxcCompiler, includeHandler);
 	assert(vertexShaderBlob != nullptr);
 
-	Microsoft::WRL::ComPtr<IDxcBlob> pixelShaderBlob = CompileShader(L"Object3d.PS.hlsl", L"ps_6_0", dxcUtils, dxcCompiler, includeHandler);
+	Microsoft::WRL::ComPtr<IDxcBlob> pixelShaderBlob = CompileShader(L"resources/Shader/Object3d.PS.hlsl", L"ps_6_0", dxcUtils, dxcCompiler, includeHandler);
 	assert(pixelShaderBlob != nullptr);
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
@@ -1884,8 +1884,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//wvpDataSphere->WVP = Multiply(sphereWorldMatrix, Multiply(viewMatrix, projectionMatrix));
 			//wvpDataSphere->World = sphereWorldMatrix;
 
-
-
 			//Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
 			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			//Matrix4x4 viewMatrix = Inverse(cameraMatrix);
@@ -1931,7 +1929,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ImGui::NewFrame();
 
 			////開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
-			ImGui::ShowDemoWindow();
+			//ImGui::ShowDemoWindow();
 			ImGui::Begin("Settings");
 			ImGui::DragFloat3("CameraTranslate", &cameraTransform.translate.x, 0.01f);
 			ImGui::SliderAngle("CameraRotateX", &cameraTransform.rotate.x);
@@ -1942,10 +1940,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ImGui::SliderAngle("SphereRotateZ", &sphereTransform.rotate.z);
 			ImGui::DragFloat4("color", &materialData->color.x, 0.01f, 0.0f, 1.0f);
 			ImGui::Checkbox("enableLighting", reinterpret_cast<bool*>(&materialData->enableLighting));
+			ImGui::DragFloat3("colorSprite", &materialDataSprite->color.x, 0.01f, 0.0f, 1.0f);
+			ImGui::SliderFloat3("translateSprite", &transformSprite.translate.x, -500.0f, 500.0f);
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 			ImGui::SliderFloat3("LightColor", &directionalLight.color.x, 0.0f, 1.0f);
 			ImGui::DragFloat3("LightDirection", &directionalLight.direction.x, 0.01f, -1.0f, 1.0f);
-			ImGui::SliderAngle("Intensity", &directionalLight.intensity, 0.0f, 10.0f);
+			ImGui::SliderAngle("Intensity", &directionalLightData->intensity, 0.0f, 10.0f);
 			ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
 			ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
 			ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
