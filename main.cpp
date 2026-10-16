@@ -1483,9 +1483,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	hr = device->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineState));
 	assert(SUCCEEDED(hr));
 
+	//===========================================モデルの読み込み============================================================================================
+
 	///モデル読み込み
 	ModelData modelData = LoadObjFile("resources", "plane.obj");
-
 	DirectX::ScratchImage mipImages2 = LoadTexture(modelData.material.textureFilePath);
 
 	//頂点リソースの作成
@@ -1587,7 +1588,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	scissorRect.bottom = kClientHeight;
 
 	//Transform変数を作る
-	Transform transform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
+	Transform transform{ {2.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} };
 	Transform cameraTransform{ {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f} };
 
 	Transform uvTransformSprite{
@@ -1595,6 +1596,58 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		{0.0f, 0.0f, 0.0f},
 		{0.0f, 0.0f, 0.0f},
 	};
+
+	//==========================================================================================================
+
+	//=========================================フェンスモデルの読み込み===========================================================
+
+	//DescriptorSizeを取得
+	const UINT descriptorSizeSRV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	//objとテクスチャの読み込み
+	ModelData modelDataFence = LoadObjFile("resources", "fence.obj");
+	DirectX::ScratchImage mipImagesFence = LoadTexture(modelDataFence.material.textureFilePath);
+
+	//フェンス用テクチャリソースの作成とデータ転送
+	const DirectX::TexMetadata& metadataFence = mipImagesFence.GetMetadata();
+	Microsoft::WRL::ComPtr<ID3D12Resource> textureResourceFence = CreateTextureResource(device, metadataFence);
+	UploadTextureData(textureResourceFence, mipImagesFence);
+
+	//フェンス用SRVの作成
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDescFence{};
+	srvDescFence.Format = metadataFence.format;
+	srvDescFence.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDescFence.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDescFence.Texture2D.MipLevels = UINT(metadataFence.mipLevels);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPUFence = GetCPUDescriptorHandle(srvDescriptorHeap, descriptorSizeSRV, 3);
+	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPUFence = GetGPUDescriptorHandle(srvDescriptorHeap, descriptorSizeSRV, 3);
+	
+	device->CreateShaderResourceView(textureResourceFence.Get(), &srvDescFence, textureSrvHandleCPUFence);
+
+	//フェンス用頂点バッファリソースの作成
+	Microsoft::WRL::ComPtr<ID3D12Resource> vertexResourceFence = CreateBufferResource(device, sizeof(VertexData) * modelDataFence.vertices.size());
+
+	//頂点バッファビューの設定
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewFence{};
+	vertexBufferViewFence.BufferLocation = vertexResourceFence->GetGPUVirtualAddress();
+	vertexBufferViewFence.SizeInBytes = UINT(sizeof(VertexData) * modelDataFence.vertices.size());
+	vertexBufferViewFence.StrideInBytes = sizeof(VertexData);
+
+	//頂点データの書き込み
+	VertexData* vertexDataFence = nullptr;
+	vertexResourceFence->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataFence));
+	std::memcpy(vertexDataFence, modelDataFence.vertices.data(), sizeof(VertexData) * modelDataFence.vertices.size());
+	vertexResourceFence->Unmap(0, nullptr);
+
+	//フェンス配置用のTransformとWVP定数バッファの作成
+	Transform transformFence{ {4.0f, 4.0f, 4.0f}, {-0.50f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
+	Microsoft::WRL::ComPtr<ID3D12Resource> wvpResourceFence = CreateBufferResource(device, sizeof(TransformationMatrix));
+	TransformationMatrix* wvpDataFence = nullptr;
+	wvpResourceFence->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataFence));
+
+
+	//==========================================================================================================================
 
 	//デバッグカメラのインスタンス化
 	DebugCamera camera;
@@ -1918,6 +1971,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 			//materialData->uvTransform = uvTransformMatrix;
 
+			//フェンスのワールド行列とWVP行列を計算
+			Matrix4x4 worldMatrixFence = MakeAffineMatrix(transformFence.scale, transformFence.rotate, transformFence.translate);
+			wvpDataFence->WVP = Multiply(worldMatrixFence, Multiply(viewMatrix, projectionMatrix));
+			wvpDataFence->World = worldMatrixFence;
+
 			//キーボード情報の取得開始
 			keyboard->Acquire();
 
@@ -2070,6 +2128,17 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			//描画!(DrawCall/ドローコール)6個のインデックスを使用し1つのインスタンスを描画。その他は当面0で良い
 			//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
+			//フェンスの描画
+			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(1, wvpResourceFence->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPUFence);
+			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
+
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewFence);
+			commandList->DrawInstanced(UINT(modelDataFence.vertices.size()), 1, 0, 0);
+
+		
 
 
 #ifdef USE_IMGUI
