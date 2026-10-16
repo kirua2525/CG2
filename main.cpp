@@ -195,7 +195,17 @@ enum BlendMode {
 
 };
 
+static float color[4] = { 1.00f, 1.000f, 0.000f, 0.031f };
+static int currentBlendMode = kBlendModeAdd;
 
+const char* blendModeNames[] = {
+
+	"kBlendModeAdd",
+	"kBlendModeSubtract",
+	"kBlendModeMultiply",
+	"kBlendModeScreen"
+
+};
 
 
 ////4x4単位行列を作成する関数
@@ -1938,19 +1948,19 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ImGui::SliderAngle("SphereRotateX", &sphereTransform.rotate.x);
 			ImGui::SliderAngle("SphereRotateY", &sphereTransform.rotate.y);
 			ImGui::SliderAngle("SphereRotateZ", &sphereTransform.rotate.z);
-			ImGui::DragFloat4("color", &materialData->color.x, 0.01f, 0.0f, 1.0f);
+			ImGui::ColorEdit4("color", &materialData->color.x, ImGuiColorEditFlags_Float);
+			ImGui::Combo("Blend", &currentBlendMode, blendModeNames, IM_ARRAYSIZE(blendModeNames));
 			ImGui::Checkbox("enableLighting", reinterpret_cast<bool*>(&materialData->enableLighting));
 			ImGui::DragFloat3("colorSprite", &materialDataSprite->color.x, 0.01f, 0.0f, 1.0f);
 			ImGui::SliderFloat3("translateSprite", &transformSprite.translate.x, -500.0f, 500.0f);
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 			ImGui::SliderFloat3("LightColor", &directionalLight.color.x, 0.0f, 1.0f);
 			ImGui::DragFloat3("LightDirection", &directionalLight.direction.x, 0.01f, -1.0f, 1.0f);
-			ImGui::SliderAngle("Intensity", &directionalLightData->intensity, 0.0f, 10.0f);
+			ImGui::SliderAngle("Intensity", &directionalLightData->intensity, 0.0f, 60.0f);
 			ImGui::DragFloat2("UVTranslate", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
 			ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
 			ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
-			
-			
+
 			ImGui::End();
 
 			////ImGuiの内部コマンドを生成する
