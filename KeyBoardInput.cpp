@@ -9,12 +9,12 @@
 void KeyBoardInput::Initialize(HINSTANCE hInstance, HWND hwnd) {
 
 	HRESULT hr;
-	WNDCLASS wc{};
+	//WNDCLASS wc{};
 
 	//DirectInputの初期化
-	IDirectInput8* directInput = nullptr;
+	ComPtr<IDirectInput8> directInput = nullptr;
 	hr = DirectInput8Create(
-		wc.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8,
+		hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8,
 		(void**)&directInput, nullptr);
 	assert(SUCCEEDED(hr));
 

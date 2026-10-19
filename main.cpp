@@ -1052,9 +1052,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	keyBoardInput = new KeyBoardInput();
 	keyBoardInput->Initialize(wc.hInstance, hwnd);
 
-	//入力開放
-	delete keyBoardInput;
-
 #ifdef _DEBUG
 
 	Microsoft::WRL::ComPtr<ID3D12Debug1> debugController = nullptr;
@@ -2113,6 +2110,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//xAudio2解放
 	//xAudio2.Reset();
 
+
+	//入力開放
+	delete keyBoardInput;
 
 #ifdef USE_IMGUI
 
