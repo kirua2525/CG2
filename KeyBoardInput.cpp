@@ -39,7 +39,6 @@ void KeyBoardInput::Update() {
 	keyboard->Acquire();
 
 	//全キーの入力状態を取得する
-	BYTE key[256] = {};
 	keyboard->GetDeviceState(sizeof(key), key);
 
 
@@ -48,5 +47,19 @@ void KeyBoardInput::Update() {
 
 
 
+
+}
+
+bool KeyBoardInput::PushKey(BYTE keyNumber)
+{
+	//指定キーを押していればtrueを返す
+	if (key[keyNumber]) {
+	
+		return false;
+	
+	}
+
+	//そうでなければfalseを返す
+	return false;
 
 }

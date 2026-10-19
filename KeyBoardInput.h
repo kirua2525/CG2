@@ -22,8 +22,15 @@ public:
 
 public:
 
-//namespace省略
+    //namespace省略
 	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
+
+	///<summary>
+	///キーの押下をチェック
+	///</summary>
+    ///<param name= "keyNumber">キー番号( DIK_0 等)</param>
+	///<returns>押されているか</returns>
+	bool PushKey(BYTE keyNumber);
 
 
 private:
@@ -31,8 +38,8 @@ private:
 	//キーボードのデバイス
 	ComPtr<IDirectInputDevice8> keyboard = nullptr;
 
-
-
+	//全キーの状態
+	BYTE key[256] = {};
 
 };
 

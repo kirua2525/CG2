@@ -1904,12 +1904,39 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			keyBoardInput->Update();
 
 			//数字の0キーが押されていたら
-			//if (key[DIK_0])
+			if (keyBoardInput->PushKey(DIK_0))
+			{
+
+				OutputDebugStringA("Hit 0\n");
+
+			}
+
+			//座標操作
+			//if (key[DIK_UP] || key[DIK_DOWN] || key[DIK_RIGHT] || key[DIK_LEFT])
 			//{
 
-			//	OutputDebugStringA("Hit 0\n");
+			//	if (key[DIK_UP]) {
+
+			//		object3ds[0].position.y += 1.0f;
+
+			//	} else if (key[DIK_DOWN]) {
+
+			//		object3ds[0].position.y -= 1.0f;
+
+			//	}
+
+			//	if (key[DIK_RIGHT]) {
+
+			//		object3ds[0].position.x += 1.0f;
+
+			//	} else if (key[DIK_LEFT]) {
+
+			//		object3ds[0].position.x -= 1.0f;
+
+			//	}
 
 			//}
+
 
 #ifdef USE_IMGUI
 			ImGui_ImplDX12_NewFrame();
