@@ -31,7 +31,7 @@ public:
     ///<param name= "keyNumber">キー番号( DIK_0 等)</param>
 	///<returns>押されているか</returns>
 	bool PushKey(BYTE keyNumber);
-
+	
 	///<summary>
 	///キーのトリガーをチェック
 	/// </summary>
