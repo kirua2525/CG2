@@ -7,6 +7,8 @@
 
 #include "DebugCamera.h"
 
+#include "KeyBoardInput.h"
+
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <cassert>
@@ -51,8 +53,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 #define DIRECTINPUT_VERSION 0x0800 //DirectInputのバージョン指定
 #include <dinput.h>
 
-#pragma comment(lib, "dinput8.lib")
-#pragma comment(lib, "dxguid.lib")
+//#pragma comment(lib, "dinput8.lib")
+//#pragma comment(lib, "dxguid.lib")
 
 
 //struct Matrix3x3 {
@@ -1043,26 +1045,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		wc.hInstance,             //インスタンスハンドル
 		nullptr);                 //オプション
 
-	//DirectInputの初期化
-	IDirectInput8* directInput = nullptr;
-	hr = DirectInput8Create(
-		wc.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8,
-		(void**)&directInput, nullptr);
-	assert(SUCCEEDED(hr));
+	//ポインタ
+	KeyBoardInput* keyBoardInput = nullptr;
 
-	//キーボードデバイスの生成
-	IDirectInputDevice8* keyboard = nullptr;
-	hr = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
-	assert(SUCCEEDED(hr));
+	//入力の初期化
+	keyBoardInput = new KeyBoardInput();
+	keyBoardInput->Initialize(wc.hInstance, hwnd);
 
-	//入力データ形式のセット
-	hr = keyboard->SetDataFormat(&c_dfDIKeyboard);
-	assert(SUCCEEDED(hr));
-
-	//排他制御レベルのセット
-	hr = keyboard->SetCooperativeLevel(
-		hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
-	assert(SUCCEEDED(hr));
+	//入力開放
+	delete keyBoardInput;
 
 #ifdef _DEBUG
 
@@ -1909,20 +1900,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 			//materialData->uvTransform = uvTransformMatrix;
 
-			//キーボード情報の取得開始
-			keyboard->Acquire();
-
-			//全キーの入力状態を取得する
-			BYTE key[256] = {};
-			keyboard->GetDeviceState(sizeof(key), key);
+			//入力の更新
+			keyBoardInput->Update();
 
 			//数字の0キーが押されていたら
-			if (key[DIK_0])
-			{
+			//if (key[DIK_0])
+			//{
 
-				OutputDebugStringA("Hit 0\n");
+			//	OutputDebugStringA("Hit 0\n");
 
-			}
+			//}
 
 #ifdef USE_IMGUI
 			ImGui_ImplDX12_NewFrame();
