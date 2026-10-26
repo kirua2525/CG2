@@ -1,13 +1,10 @@
-#include <Windows.h>
-#include <cstdint>
 #include <string>
 #include <format>
 #include <math.h>
 #include "Math.h"
-
 #include "DebugCamera.h"
-
 #include "KeyBoardInput.h"
+#include "WindAPI.h"
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -42,12 +39,9 @@
 #pragma comment(lib, "xaudio2.lib")
 
 #ifdef USE_IMGUI
-#include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
 
-
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif 
 
 #define DIRECTINPUT_VERSION 0x0800 //DirectInputのバージョン指定
@@ -675,33 +669,33 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateDepthStencilTextureResource(Microso
 
 }
 
-//ウィンドウプロシージャ
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-
-#ifdef USE_IMGUI
-	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
-
-		return true;
-
-	}
-#endif
-
-	//メッセージに応じてゲーム固有の処理を行う
-	switch (msg) {
-
-		//ウィンドウが破棄された
-	case WM_DESTROY:
-
-		//OSに対して、アプリの終了を伝える
-		PostQuitMessage(0);
-
-		return 0;
-	}
-
-	//標準のメッセージ処理を行う
-	return DefWindowProc(hwnd, msg, wparam, lparam);
-
-}
+////ウィンドウプロシージャ
+//LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+//
+//#ifdef USE_IMGUI
+//	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
+//
+//		return true;
+//
+//	}
+//#endif
+//
+//	//メッセージに応じてゲーム固有の処理を行う
+//	switch (msg) {
+//
+//		//ウィンドウが破棄された
+//	case WM_DESTROY:
+//
+//		//OSに対して、アプリの終了を伝える
+//		PostQuitMessage(0);
+//
+//		return 0;
+//	}
+//
+//	//標準のメッセージ処理を行う
+//	return DefWindowProc(hwnd, msg, wparam, lparam);
+//
+//}
 
 
 
@@ -955,7 +949,12 @@ SoundData SoundLoadWave(const char* filename)
 //Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
-	HRESULT hr;
+	//ポインタ
+	WindAPI* windAPI = nullptr;
+
+	//WindowsAPIの初期化
+	windAPI = new WindAPI();
+	windAPI->Initialize();
 
 	//音声読み込み
 	//SoundData soundData1 = SoundLoadWave("Resources/Alarm07.wav");
@@ -1002,48 +1001,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//ファイルを作って書き込み準備
 	std::ofstream logStream(logFilePath);
 
-	WNDCLASS wc{};
-
-	//ウィンドウプロシージャ
-	wc.lpfnWndProc = WindowProc;
-
-	//ウィンドウクラス名(なんでもいい)
-	wc.lpszClassName = L"CG2WindowClass";
-
-	//インスタンスハンドル
-	wc.hInstance = GetModuleHandle(nullptr);
-
-	//カーソル
-	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-
-	//ウィンドウクラスを登録する
-	RegisterClass(&wc);
-
 	Microsoft::WRL::ComPtr<ID3D12Device> device = nullptr;
-
-	//クライアント領域のサイズ
-	const int32_t kClientWidth = 1280;
-	const int32_t kClientHeight = 720;
-
-	//ウィンドウサイズを表す構造体にクライアント領域を入れる
-	RECT wrc = { 0, 0, kClientWidth, kClientHeight };
-
-	//クライアント領域を元に実際のサイズにwrcを変更してもらう
-	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
-
-	//ウィンドウの生成
-	HWND hwnd = CreateWindow(
-		wc.lpszClassName,         //利用するクラス名
-		L"CG2",                   //タイトルバーの文字　(なんでもいい)
-		WS_OVERLAPPEDWINDOW,      //よく見るウィンドウスタイル
-		CW_USEDEFAULT,            //表示X座標(Windowsに任せる)
-		CW_USEDEFAULT,            //表示Y座標(WindowOSに任せる)
-		wrc.right - wrc.left,     //ウィンドウ横幅
-		wrc.bottom - wrc.top,     //ウィンドウ縦幅
-		nullptr,                  //親ウィンドウハンドル
-		nullptr,                  //メニューハンドル
-		wc.hInstance,             //インスタンスハンドル
-		nullptr);                 //オプション
 
 	//ポインタ
 	KeyBoardInput* keyBoardInput = nullptr;
@@ -1067,8 +1025,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 #endif
 
-	//ウィンドウを表示する
-	ShowWindow(hwnd, SW_SHOW);
+	////ウィンドウを表示する
+	//ShowWindow(hwnd, SW_SHOW);
 
 	MSG msg{};
 
@@ -2140,6 +2098,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//入力開放
 	delete keyBoardInput;
+
+	//WindowsAPI解放
+	delete windAPI;
 
 #ifdef USE_IMGUI
 

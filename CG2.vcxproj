@@ -49,6 +49,7 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
     </ClCompile>
+    <ClCompile Include="WindAPI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\Shader\Object3d.PS.hlsl">
@@ -80,6 +81,7 @@
     <ClInclude Include="externals\imgui\imstb_truetype.h" />
     <ClInclude Include="KeyBoardInput.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="WindAPI.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt" />
