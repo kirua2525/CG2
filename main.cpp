@@ -956,6 +956,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	windAPI = new WindAPI();
 	windAPI->Initialize();
 
+	HRESULT hr;
+
 	//音声読み込み
 	//SoundData soundData1 = SoundLoadWave("Resources/Alarm07.wav");
 
@@ -1100,7 +1102,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(device != nullptr);
 	Log("Complete create D3D12Device!!!\n"); //初期化完了のログをだす
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource = CreateDepthStencilTextureResource(device, kClientWidth, kClientHeight);
+	Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource = CreateDepthStencilTextureResource(device, WindAPI::kClientWidth, WindAPI::kClientHeight);
 
 	//Textureを読んで転送する
 	DirectX::ScratchImage mipImages = LoadTexture("resources/uvChecker.png");
@@ -1174,8 +1176,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain = nullptr;
 
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-	swapChainDesc.Width = kClientWidth;
-	swapChainDesc.Height = kClientHeight;
+	swapChainDesc.Width = WindAPI::kClientWidth;
+	swapChainDesc.Height = WindAPI::kClientHeight;
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.SampleDesc.Count = 1;
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
