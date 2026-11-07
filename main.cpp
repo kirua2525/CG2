@@ -500,6 +500,20 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(Microsoft::WRL::Com
 	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
 	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
 
+	//Resourceの作成(Instancing用にTransformationMatrixを10コ格納できるResoueceを作る)
+	const uint32_t kNumInstance = 10; //インスタンス数
+	//Instancing用のTransformationMatrixリソースを作る
+	Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource = CreateBufferResource(device, sizeof(TransformationMatrix) * kNumInstance);
+	//書き込むためのアドレスを取得
+	TransformationMatrix* instancingData = nullptr;
+	instancingResource->Map(0, nullptr, reinterpret_cast<void**>(&instancingData));
+	//単位行列を書き込んでおく
+	for (uint32_t index = 0; index < kNumInstance; ++index) {
+
+		instancingData[index].WVP = MakeIdentity4x4();
+		instancingData[index].World = MakeIdentity4x4();
+
+	}
 
 	///3. Resourceを生成する
 	Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
@@ -511,6 +525,8 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(Microsoft::WRL::Com
 		nullptr,
 		IID_PPV_ARGS(&resource)
 	);
+	
+	
 	assert(SUCCEEDED(hr));
 	return resource;
 
@@ -749,7 +765,7 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 	modelData.vertices.push_back({ .position = {1.0f, -1.0f, 0.0f, 1.0f}, .texcoord = {0.0f, 1.0f}, .normal = {0.0f, 0.0f, 1.0f} });	//左下
 	modelData.vertices.push_back({ .position = {-1.0f, 1.0f, 0.0f, 1.0f}, .texcoord = {1.0f, 0.0f}, .normal = {0.0f, 0.0f, 1.0f} });	//右上
 	modelData.vertices.push_back({ .position = {-1.0f, -1.0f, 0.0f, 1.0f}, .texcoord = {1.0f, 1.0f}, .normal = {0.0f, 0.0f, 1.0f} });	//右下
-
+	modelData.material.textureFilePath = "./resource/uvChecker.png";
 
 	std::vector<Vector4> positions; //位置
 
@@ -1362,20 +1378,33 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	//RootSignature作成
-	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
-	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	//D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
+	//descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-	descriptionRootSignature.pParameters = rootParameters;
-	descriptionRootSignature.NumParameters = _countof(rootParameters);
+	//descriptionRootSignature.pParameters = rootParameters;
+	//descriptionRootSignature.NumParameters = _countof(rootParameters);
 
-	descriptionRootSignature.pStaticSamplers = staticSamplers;
-	descriptionRootSignature.NumStaticSamplers = _countof(staticSamplers);
+	//descriptionRootSignature.pStaticSamplers = staticSamplers;
+	//descriptionRootSignature.NumStaticSamplers = _countof(staticSamplers);
+
+	//RootSignatureをParticle用に変更
+	D3D12_DESCRIPTOR_RANGE descriptorRangerForInstancing[1] = {};
+	descriptorRangeForInstancing[0].BaseShaderRegister = 0;	//0から始まる
+	descriptorRangeForInstancing[0].NumDescriptors = 1;	//数は一つ
+	descriptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	//SRVを使う
+	descriptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;	//DescriptorTableを使う
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;	//VertexShaderで使う
+	rootParameters[1].DescriptorTable.pDescriptorRanges = descriptorRangeForInstancing;
+	rootParameters[1].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeForInstancing);
 
 	//シリアライズしてバイナリにする
 	Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob = nullptr;
 	Microsoft::WRL::ComPtr<ID3DBlob> errorBlob = nullptr;
 
-	hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+	hr = D3D12SerializeRootSignature(&descriptorRangeForInstancing, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+	//hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 
 	if (FAILED(hr)) {
 
@@ -1628,6 +1657,43 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Microsoft::WRL::ComPtr<ID3D12Resource> wvpResourceSphere = CreateBufferResource(device, sizeof(TransformationMatrix));
 	TransformationMatrix* wvpDataSphere = nullptr;
 	wvpResourceSphere->Map(0, nullptr, reinterpret_cast<void**>(&wvpDataSphere));
+
+	//===========================================================================
+
+	//SRVの作成(Instancing用)
+	D3D12_SHADER_RESOURCE_VIEW_DESC instancingSrvDesc{};
+	instancingSrvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	instancingSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	instancingSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	instancingSrvDesc.Buffer.FirstElement = 0;
+	instancingSrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+	instancingSrvDesc.Buffer.NumElements = kNumInstance;
+	instancingSrvDesc.Buffer.StructureByteStride = sizeof(TransformationMatrix);
+	D3D12_CPU_DESCRIPTOR_HANDLE instancingHandleCPU = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
+	D3D12_GPU_DESCRIPTOR_HANDLE instancingHandleGPU = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
+	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc, instancingSrvHandleCPU);
+	
+	//Transformの作成
+	Transform transforms[kNumInstance];
+	for (uint32_t index = 0; index < kNumInstance; ++index) {
+
+		transforms[index].scal = { 1.0f, 1.0f, 1.0f };
+		transforms[index].rotate = { 0.0f, 0.0f, 0.0f };
+		transforms[index].translate = { index * 0.1f, index * 0.1f, index * 0.1f };
+	
+	}
+
+	//Transformの書き込む
+	for (uint32_t index = 0; index < kNumInstance; ++index) {
+
+		Matrix4x4 worldMatrix = MakeAffineMatrix(transforms[index].scale, transforms[index].rotate, transforms[index].translate);
+		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, viewProjectionMatrix);
+		instancingData[index].WVP = worldViewProjectionMatrix;
+		instancingData[index].World = worldMatrix;
+
+	}
+
+	//================================================================================
 
 #ifdef USE_IMGUI
 	//ImGuiの初期化。詳細はさして重要ではないので解答は省略する。
@@ -2069,6 +2135,17 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			//描画!(DrawCall/ドローコール)6個のインデックスを使用し1つのインスタンスを描画。その他は当面0で良い
 			//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
+			//=========================================================================================
+
+			//Instancing用のSRVを設定して描画
+			//他の設定諸々
+			//insstancing用のDataを読むためにStructureBufferのSRVを設定する
+			commandList->SetGraphicsRootDescriptorTable(1, instancingSrvHandleGPU);
+
+			//他の設定諸々
+			commandList->DrawInstanced(UINT(modelData.vertices.size()), kNumInstance, 0, 0);
+
+
 			//Particleの描画
 			for (int i = 0; i < 10; i++) {
 
@@ -2078,12 +2155,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
 				commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-				commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
+				commandList->DrawInstanced(UINT(modelData.vertices.size()), instanceCount, 0, 0);
 
 			}
 
 
-
+			//================================================================================================
 
 #ifdef USE_IMGUI
 
