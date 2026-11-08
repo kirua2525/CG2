@@ -8,6 +8,8 @@ public:		//静的メンバ関数
 
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
+	//getter
+	HINSTANCE GetHIstance() const { return wc.hInstance; }
 
 public:		//メンバ関数
 
@@ -29,7 +31,8 @@ private:
 	//ウィンドハンドル
 	HWND hwnd = nullptr;
 
-
+	//ウィンドウクラスの設定
+	WNDCLASS wc{};
 
 };
 

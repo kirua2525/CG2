@@ -1010,7 +1010,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//入力の初期化
 	keyBoardInput = new KeyBoardInput();
-	keyBoardInput->Initialize(wc.hInstance, hwnd);
+	keyBoardInput->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
 
 
 #ifdef _DEBUG
@@ -1184,7 +1184,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	swapChainDesc.BufferCount = 2;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
-	dxgiFactory->CreateSwapChainForHwnd(commandQueue.Get(), hwnd, &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(swapChain.GetAddressOf()));
+	dxgiFactory->CreateSwapChainForHwnd(
+		commandQueue.Get(),
+		winApp->GetHwnd(),
+		&swapChainDesc,
+		nullptr,
+		nullptr,
+		reinterpret_cast<IDXGISwapChain1**>(swapChain.GetAddressOf()));
 
 	//コマンドキュー、ウィンドウハンドル、設定を渡して生成する
 	//hr = dxgiFactory->CreateSwapChainForHwnd(commandQueue.Get(), hwnd, &swapChainDesc, nullptr, nullptr, reinterpret_cast<IDXGISwapChain1**>(&swapChain));
