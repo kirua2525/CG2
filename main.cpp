@@ -956,6 +956,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	windAPI = new WindAPI();
 	windAPI->Initialize();
 
+
 	HRESULT hr;
 
 	//音声読み込み
@@ -1010,7 +1011,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//入力の初期化
 	keyBoardInput = new KeyBoardInput();
-	keyBoardInput->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
+	keyBoardInput->Initialize(windAPI);
 
 
 #ifdef _DEBUG
@@ -1186,7 +1187,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	dxgiFactory->CreateSwapChainForHwnd(
 		commandQueue.Get(),
-		winApp->GetHwnd(),
+		windAPI->GetHwnd(),
 		&swapChainDesc,
 		nullptr,
 		nullptr,
@@ -2104,11 +2105,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//xAudio2解放
 	//xAudio2.Reset();
 
+	//WindowsAPIの終了処理
+	windAPI->Finalize();
+
 	//入力開放
 	delete keyBoardInput;
 
 	//WindowsAPI解放
 	delete windAPI;
+	windAPI = nullptr;
 
 #ifdef USE_IMGUI
 
@@ -2118,7 +2123,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 #endif
-
 
 	CloseWindow(hwnd);
 

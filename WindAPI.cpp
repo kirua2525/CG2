@@ -73,3 +73,11 @@ void  WindAPI::UpDate() {
 
 
 }
+
+void WindAPI::Finalize()
+{
+
+	CloseWindow(hwnd);
+	CoUninitialize();
+
+}

@@ -9,13 +9,15 @@ public:		//静的メンバ関数
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
 	//getter
-	HINSTANCE GetHIstance() const { return wc.hInstance; }
+	HINSTANCE GetHInstance() const { return wc.hInstance; }
 
 public:		//メンバ関数
 
 	void Initialize();
 
 	void UpDate();
+
+	void Finalize(); //終了
 
 public:		//定数
 

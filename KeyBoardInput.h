@@ -5,6 +5,7 @@
 
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
+#include "WindAPI.h"
 
 
 class KeyBoardInput
@@ -13,7 +14,7 @@ class KeyBoardInput
 public:
 
 	//初期化
-	void Initialize(HINSTANCE hInstance, HWND hwnd);
+	void Initialize(WindAPI* windAPI);
 
 	//更新
 	void  Update();
@@ -52,6 +53,9 @@ private:
 
 	//前回の全キーの状態
 	BYTE keyPre[256] = {};
+
+	//WindowsAPI
+	WindAPI* windAPI_ = nullptr;
 
 };
 

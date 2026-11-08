@@ -6,14 +6,17 @@
 #pragma comment(lib, "dxguid.lib")
 
 
-void KeyBoardInput::Initialize(HINSTANCE hInstance, HWND hwnd) {
+void KeyBoardInput::Initialize(WindAPI* windAPI) {
+
+	//借りてきたWindAPIのインスタンスを記録
+	this->windAPI_ = windAPI;
 
 	HRESULT hr;
 
 	//DirectInputの初期化
 	ComPtr<IDirectInput8> directInput = nullptr;
 	hr = DirectInput8Create(
-		hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8,
+		windAPI->GetHInstance(), DIRECTINPUT_VERSION, IID_IDirectInput8,
 		(void**)&directInput, nullptr);
 	assert(SUCCEEDED(hr));
 
@@ -27,7 +30,7 @@ void KeyBoardInput::Initialize(HINSTANCE hInstance, HWND hwnd) {
 
 	//排他制御レベルのセット
 	hr = keyboard->SetCooperativeLevel(
-		hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
+		windAPI->GetHwnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
 	assert(SUCCEEDED(hr));
 
 }
