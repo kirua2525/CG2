@@ -11,6 +11,9 @@ public:		//静的メンバ関数
 	//getter
 	HINSTANCE GetHInstance() const { return wc.hInstance; }
 
+	//メッセージの処理
+	bool ProcessMessage();
+
 public:		//メンバ関数
 
 	void Initialize();

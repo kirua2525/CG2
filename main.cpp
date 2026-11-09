@@ -1809,10 +1809,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	indexDataSprite[3] = 1; indexDataSprite[4] = 3; indexDataSprite[5] = 2;
 
 	//ウィンドウのxボタンが押されるまでループ
-	while (msg.message != WM_QUIT) {
+	while (true) {
 
 		//Windowsにメッセージが来てたら最優先で処理される
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+		if (windAPI->ProcessMessage()) {
 
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
