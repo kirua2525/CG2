@@ -6,7 +6,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 
 //ウィンドウプロシージャ
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+LRESULT CALLBACK WindAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
 #ifdef USE_IMGUI
 	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
@@ -35,7 +35,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
 void WindAPI::Initialize() {
 	
-	HRESULT hr;
+	//HRESULT hr;
 
 	//ウィンドウプロシージャ
 	wc.lpfnWndProc = WindowProc;
@@ -57,6 +57,19 @@ void WindAPI::Initialize() {
 
 	//クライアント領域を元に実際のサイズにwrcを変更してもらう
 	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
+
+	HWND hwnd = CreateWindow(
+		wc.lpszClassName,
+		L"CG2",
+		WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		wrc.right - wrc.left,
+		wrc.bottom - wrc.top,
+		nullptr,
+		nullptr,
+		wc.hInstance,
+		nullptr);
 
 	//ウィンドウを表示する
 	ShowWindow(hwnd, SW_SHOW);
