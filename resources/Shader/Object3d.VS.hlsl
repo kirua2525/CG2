@@ -9,7 +9,8 @@ struct TransformationMatrix
 };
 
 
-ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b0);
+//ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b0);
+StructuredBuffer<TransformationMatrix> gTransformationMatrix : register(t0);
 
 struct VertexShaderInput
 {
@@ -20,14 +21,14 @@ struct VertexShaderInput
 };
 
 
-VertexShaderOutput main(VertexShaderInput input)
+VertexShaderOutput main(VertexShaderInput input, uint instanceId : SV_InstanceID)
 {
 	
     VertexShaderOutput output;
 	
-    output.position = mul(input.position, gTransformationMatrix.WVP);
+    output.position = mul(input.position, gTransformationMatrix[instanceId].WVP);
     output.texcoord = input.texcoord;
-    output.normal = normalize(mul( (float32_t3x3) gTransformationMatrix.World, input.normal));
+    output.normal = normalize(mul(input.normal, (float32_t3x3)gTransformationMatrix[instanceId].World));
     
  
     return output;
